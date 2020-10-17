@@ -11,6 +11,7 @@
 #include "PacketQueue.h"
 #include "../base/BaseQueueController.h"
 #include "../model/ParseResult.h"
+#include "IDecoder.h"
 #include <thread>
 
 NS_KP_BEGIN
@@ -32,22 +33,18 @@ NS_KP_BEGIN
         std::function<void(double, int,uint8_t*)> decodeFinish;
     };
 
-    class IAudioDecoder : public Base {
+    class IAudioDecoder : public SimpleDecoder {
     public:
+        IAudioDecoder(ParseResult *playInfo) : SimpleDecoder(playInfo){}
+
+        ~IAudioDecoder() {
+            KP_SAFE_DELETE(decoderListener)
+        }
+
         virtual void setAudioDecoderListener(IAudioDecoderListener *listener) {
             KP_SAFE_DELETE(decoderListener)
             decoderListener = listener;
         }
-
-        virtual void start() = 0;
-
-        virtual void resume() = 0;
-
-        virtual void pause() = 0;
-
-        virtual void stop() = 0;
-
-        virtual void addPacket(AVPacket avPacket) = 0;
 
     protected:
         IAudioDecoderListener *decoderListener = nullptr;
@@ -59,35 +56,15 @@ NS_KP_BEGIN
 
         ~AudioDecoder();
 
-        virtual void start() override;
-
-        virtual void resume() override;
-
-        virtual void pause() override;
-
-        virtual void stop() override;
-
-        virtual void addPacket(AVPacket avPacket) override ;
-
         virtual std::string getTag() override {
             return "AudioDecoder";
         }
     private:
-        PacketQueue packetQueue;
-        ParseResult *playInfo = nullptr;
         uint8_t *audio_out_buffer = nullptr;
         AVFrame *audioFrame = nullptr;
         int currentBufferSize = 1024;
 
         void decodeIml(AVPacket avPacket);
-
-        void onQueueRun() override;
-
-        void onQueueResume() override;
-
-        void onQueuePause() override;
-
-        void onQueueStop() override;
     };
 NS_KP_END
 

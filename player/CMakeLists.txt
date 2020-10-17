@@ -36,6 +36,6 @@ add_executable(player
         model/AudioBuffer.cpp
         model/AudioBuffer.h
         model/BaseNode.cpp
-        model/BaseNode.h)
+        model/BaseNode.h media/VideoDecoder.cpp media/VideoDecoder.h media/VideoPlay.cpp media/VideoPlay.h media/IDecoder.h media/IDecoder.cpp)
 
 include_directories(${CMAKE_SOURCE_DIR}/../includes/ffmpeg)

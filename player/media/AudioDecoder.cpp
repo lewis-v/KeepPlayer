@@ -9,61 +9,12 @@
 
 NS_KP_BEGIN
 
-    void AudioDecoder::start() {
-
-    }
-
-    void AudioDecoder::resume() {
-        queueResume();
-    }
-
-    void AudioDecoder::pause() {
-        queuePause();
-    }
-
-    void AudioDecoder::stop() {
-        queueStop();
-        packetQueue.clear();
-    }
-
-    void AudioDecoder::onQueueResume() {
-
-    }
-
-    void AudioDecoder::onQueuePause() {
-
-    }
-
-    void AudioDecoder::onQueueStop() {
-
-    }
-
-    void AudioDecoder::onQueueRun() {
-        if (playInfo == nullptr) {
-            logI("AudioDecoder onQueueRun playInfo is null");
-            return;
-        }
-        AVPacket avPacket{};
-        logI("pop");
-        auto isSuccess = packetQueue.pop(&avPacket);
-        logI("pop end");
-        if (!isSuccess) {
-            logW("AudioDecoder onQueueRun pop not success");
-            return;
-        }
-        decodeIml(avPacket);
-    }
-
-    AudioDecoder::AudioDecoder(ParseResult *playInfo) {
-        this->playInfo = playInfo;
+    AudioDecoder::AudioDecoder(ParseResult *playInfo):IAudioDecoder(playInfo) {
         audio_out_buffer = (uint8_t *) av_malloc(currentBufferSize * sizeof(uint8_t));
         audioFrame = av_frame_alloc();
     }
 
     AudioDecoder::~AudioDecoder() {
-    logI("~AudioDecoder start");
-        packetQueue.clear();
-        stopSync();
         if (audioFrame != nullptr) {
             av_frame_free(&audioFrame);
             audioFrame = nullptr;
@@ -72,11 +23,10 @@ NS_KP_BEGIN
             av_free(audio_out_buffer);
             audio_out_buffer = nullptr;
         }
-        KP_SAFE_DELETE(decoderListener)
-        logI("~AudioDecoder end");
     }
 
     void AudioDecoder::decodeIml(AVPacket avPacket) {
+        if (audioFrame == nullptr || audio_out_buffer == nullptr) return;
         auto ret = avcodec_send_packet(playInfo->audioInfo->audioCodeContext, &avPacket);
         if (ret == 0) {
             while (avcodec_receive_frame(playInfo->audioInfo->audioCodeContext, audioFrame) == 0) {
@@ -112,10 +62,6 @@ NS_KP_BEGIN
         } else {
             logE("audio decode Iml ret:%d", ret);
         }
-    }
-
-    void AudioDecoder::addPacket(AVPacket avPacket) {
-        packetQueue.push(avPacket);
     }
 NS_KP_END
 
