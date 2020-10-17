@@ -34,8 +34,10 @@ NS_KP_BEGIN
     private:
         SLObjectItf engineObject = nullptr;
         SLEngineItf engineEngine = nullptr;
+
         SLObjectItf outputMixObject = nullptr;
         SLEnvironmentalReverbItf outputMixEnvironmentalReverb = nullptr;
+
         SLObjectItf pcmPlayerObject = nullptr;
         SLPlayItf pcmPlayerPlay = nullptr;
         SLAndroidSimpleBufferQueueItf pcmBufferQueue = nullptr;

@@ -245,7 +245,23 @@ NS_KP_BEGIN
 
     AndroidAudioPlay::~AndroidAudioPlay() {
         stop();
-        //todo opensl delete
+        if (pcmPlayerObject != nullptr) {
+            (*pcmPlayerObject)->Destroy(pcmPlayerObject);
+            pcmPlayerObject = nullptr;
+            pcmBufferQueue = nullptr;
+            pcmPlayerPlay = nullptr;
+            pcmPlayerVolume = nullptr;
+        }
+        if (outputMixObject != nullptr) {
+            (*outputMixObject)->Destroy(outputMixObject);
+            outputMixObject = nullptr;
+            outputMixEnvironmentalReverb = nullptr;
+        }
+        if (engineObject != nullptr) {
+            (*engineObject)->Destroy(engineObject);
+            engineObject = nullptr;
+            engineEngine = nullptr;
+        }
     }
 
 
