@@ -1,0 +1,4 @@
+rootProject.name='KeepPlayer'
+include ':app'
+include ':keepplayer'
+include ':keepplayer-native'
