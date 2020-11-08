@@ -56,7 +56,7 @@ NS_KP_BEGIN
 
                     break;
                 case AVERROR_EOF://读到结尾了
-
+                    //todo 刷buffer,传一个data为null和size为0来刷
                     break;
                 default://其他错误
 

@@ -12,6 +12,8 @@
 #include "media/PacketRead.h"
 #include "media/AudioDecoder.h"
 #include "media/AudioPlay.h"
+#include "media/VideoDecoder.h"
+#include "media/VideoPlay.h"
 
 NS_KP_BEGIN
 
@@ -83,8 +85,12 @@ NS_KP_BEGIN
 
         ParseResult* parseResult = nullptr;
         IPacketRead *read = nullptr;
+
         IAudioDecoder *audioDecoder = nullptr;
         IAudioPlay *audioPlay = nullptr;
+
+        IVideoDecoder *videoDecoder = nullptr;
+        IVideoPlay *videoPlay = nullptr;
 
         void prepareFinish();
 

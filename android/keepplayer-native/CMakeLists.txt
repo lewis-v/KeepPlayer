@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.10.2)
 
+option(RENDER_RGB "use rgb render" ON)
+
 MESSAGE("current dir ${CMAKE_SOURCE_DIR}")
 set(KEEP_DIR ${CMAKE_SOURCE_DIR}/../../player)
 
@@ -17,8 +19,11 @@ list(APPEND SRC_LIST
         ${KEEP_DIR}/base/TaskQueue.h
         ${KEEP_DIR}/base/BaseQueueController.cpp
         ${KEEP_DIR}/base/BaseQueueController.h
+        ${KEEP_DIR}/base/ImageParseUtil.cpp
+        ${KEEP_DIR}/base/ImageParseUtil.h
         ${KEEP_DIR}/base/Config.h
         ${KEEP_DIR}/base/Macros.h
+        ${KEEP_DIR}/base/GLUtil.h
         ${KEEP_DIR}/media/Parse.h
         ${KEEP_DIR}/media/Parse.cpp
         ${KEEP_DIR}/media/AudioDecoder.h
@@ -43,6 +48,15 @@ list(APPEND SRC_LIST
         ${KEEP_DIR}/model/AudioBuffer.h
         ${KEEP_DIR}/model/BaseNode.cpp
         ${KEEP_DIR}/model/BaseNode.h
+        ${KEEP_DIR}/model/VideoYUVBuffer.cpp
+        ${KEEP_DIR}/model/VideoYUVBuffer.h
+        ${KEEP_DIR}/render/YUVGLRender.cpp
+        ${KEEP_DIR}/render/YUVGLRender.h
+        ${KEEP_DIR}/render/RGBGLRender.cpp
+        ${KEEP_DIR}/render/RGBGLRender.h
+        ${KEEP_DIR}/render/BaseGLRender.cpp
+        ${KEEP_DIR}/render/BaseGLRender.h
+        ${KEEP_DIR}/render/IRender.h
         )
 
 set(KEEP_ANDROID_DIR ${CMAKE_SOURCE_DIR}/src/main/cpp)
@@ -50,8 +64,16 @@ list(APPEND SRC_LIST
         ${KEEP_ANDROID_DIR}/JniIml.cpp
         ${KEEP_ANDROID_DIR}/AndroidAudioPlay.cpp
         ${KEEP_ANDROID_DIR}/AndroidAudioPlay.h
+        ${KEEP_ANDROID_DIR}/AndroidVideoPlay.cpp
+        ${KEEP_ANDROID_DIR}/AndroidVideoPlay.h
         ${KEEP_ANDROID_DIR}/KPAndroidLog.cpp
         ${KEEP_ANDROID_DIR}/KPAndroidLog.h
+        ${KEEP_ANDROID_DIR}/GLThread.cpp
+        ${KEEP_ANDROID_DIR}/GLThread.h
+        ${KEEP_ANDROID_DIR}/GLThreadHelper.cpp
+        ${KEEP_ANDROID_DIR}/GLThreadHelper.h
+        ${KEEP_ANDROID_DIR}/JniCallBack.cpp
+        ${KEEP_ANDROID_DIR}/JniCallBack.h
 )
 
 find_library(
@@ -61,7 +83,10 @@ list(
         APPEND LINK_LIB
         KeepPlayer
         OpenSLES
+        jnigraphics
         android
+        EGL
+        GLESv3
         ${log-lib}
 )
 
@@ -83,6 +108,8 @@ list(
         libffmpeg
 )
 
+#修复windows下ffmpeg编译问题
+add_definitions(-D__STDC_CONSTANT_MACROS)
 
 add_library(
         KeepPlayer
@@ -90,7 +117,14 @@ add_library(
         ${SRC_LIST}
 )
 
-
+#------------RENDER_RGB--------------
+if (RENDER_RGB)
+    message("use rgb render")
+    add_definitions(-DRENDER_RGB)
+else ()
+    message("not use rgb render")
+endif (RENDER_RGB)
+#---------------RENDER_RGB--------------
 
 target_link_libraries(
         ${LINK_LIB})

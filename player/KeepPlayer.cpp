@@ -8,6 +8,7 @@
 #include "media/Parse.h"
 #include "base/Log.h"
 #include "../android/keepplayer-native/src/main/cpp/AndroidAudioPlay.h"
+#include "../android/keepplayer-native/src/main/cpp/AndroidVideoPlay.h"
 
 NS_KP_BEGIN
 
@@ -57,6 +58,12 @@ NS_KP_BEGIN
         if (audioPlay != nullptr) {
             audioPlay->resume();
         }
+        if (videoDecoder != nullptr) {
+            videoDecoder->resume();
+        }
+        if (videoPlay != nullptr) {
+            videoPlay->resume();
+        }
     }
 
     void KeepPlayer::pause() {
@@ -68,6 +75,12 @@ NS_KP_BEGIN
         }
         if (audioPlay != nullptr) {
             audioPlay->pause();
+        }
+        if (videoDecoder != nullptr) {
+            videoDecoder->pause();
+        }
+        if (videoPlay != nullptr) {
+            videoPlay->pause();
         }
     }
 
@@ -81,6 +94,12 @@ NS_KP_BEGIN
         if (audioPlay != nullptr) {
             audioPlay->stop();
         }
+        if (videoDecoder != nullptr) {
+            videoDecoder->stop();
+        }
+        if (videoPlay != nullptr) {
+            videoPlay->stop();
+        }
     }
 
     void KeepPlayer::reset() {
@@ -88,6 +107,8 @@ NS_KP_BEGIN
         KP_SAFE_DELETE(read)
         KP_SAFE_DELETE(audioDecoder)
         KP_SAFE_DELETE(audioPlay)
+        KP_SAFE_DELETE(videoDecoder)
+        KP_SAFE_DELETE(videoPlay)
         KP_SAFE_DELETE(parseResult)
     }
 
@@ -109,11 +130,17 @@ NS_KP_BEGIN
         read = new PacketRead(parseResult);
         audioDecoder = new AudioDecoder(parseResult);
         audioPlay = new AndroidAudioPlay(parseResult);
+        videoDecoder = new VideoDecoder(parseResult);
+        videoPlay = new AndroidVideoPlay(parseResult, (long long) this);
 
         read->setListener(new SimplePacketReadListener(
                 [&](AVPacket avPacket) {
                     //video read
-                    return false;
+                    if (videoDecoder == nullptr) {
+                        return false;
+                    }
+                    videoDecoder->addPacket(avPacket);
+                    return true;
                 },
                 [&](AVPacket avPacket) {
                     //audio read
@@ -134,12 +161,21 @@ NS_KP_BEGIN
                     }
                     audioPlay->playFrame(time, dataSize, data);
                 }));
+        videoDecoder->setVideoDecoderListener(
+                new SimpleVideoDecoderListener([&](double time, AVFrame *videoFrame) {
+                    if (videoPlay == nullptr) {
+                        return;
+                    }
+                    videoPlay->playFrame(time, videoFrame);
+                }));
     }
 
     KeepPlayer::~KeepPlayer() {
         KP_SAFE_DELETE(read)
         KP_SAFE_DELETE(audioDecoder)
         KP_SAFE_DELETE(audioPlay)
+        KP_SAFE_DELETE(videoDecoder)
+        KP_SAFE_DELETE(videoPlay)
 
         KP_SAFE_DELETE(parseResult)
 

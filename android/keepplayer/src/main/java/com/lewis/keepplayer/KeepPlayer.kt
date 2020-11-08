@@ -1,5 +1,7 @@
 package com.lewis.keepplayer
 
+import android.view.Surface
+
 class KeepPlayer {
 
     private var instance = KeepPlayerNative.newInstance()
@@ -35,5 +37,13 @@ class KeepPlayer {
     fun release() {
         KeepPlayerNative.release(instance)
         instance = 0
+    }
+
+    fun setSurface(surface: Surface) {
+        KeepPlayerNative.setSurface(instance, surface)
+    }
+
+    fun updateSurfaceSize(surface: Surface, width: Int, height: Int) {
+        KeepPlayerNative.updateSurfaceSize(instance, surface, width, height)
     }
 }

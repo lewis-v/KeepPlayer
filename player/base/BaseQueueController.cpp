@@ -28,6 +28,7 @@ NS_KP_BEGIN
     }
 
     void BaseQueueController::runIml() {
+        onQueueStart();
         while (isRun) {
             taskQueue.update();
             if (!isRun) {
@@ -38,6 +39,10 @@ NS_KP_BEGIN
                 continue;
             }
             onQueueRun();
+            int next = getWaitNextTIme();
+            if (next > 0) {
+                taskQueue.waitNextWithMaxTime(next);
+            }
         }
         onQueueStop();
         isRunFinish = true;

@@ -7,20 +7,30 @@
 #include "../../../../../player/KeepPlayer.h"
 #include "../../../../../player/base/Log.h"
 #include "KPAndroidLog.h"
+#include "GLThreadHelper.h"
+#include "JniCallBack.h"
+#include "../../../../../player/base/ImageParseUtil.h"
 
 #define JNI_CLASS(FUNC) Java_com_lewis_keepplayer_KeepPlayerNative_##FUNC
 
 extern "C"
 JNIEXPORT void JNICALL
-JNI_CLASS(init)(JNIEnv *env, jobject thiz) {
+JNI_CLASS(init)(JNIEnv *env, jobject thiz,
+                jobject callback) {
     av_register_all();
     avformat_network_init();
     KeepPlayer::KPLog::setLogCallBack(new KeepPlayer::KPAndroidLog());
+    KP::JniCallBack::init(env, callback);
 }
 
 extern "C"
 JNIEXPORT jlong JNICALL JNI_CLASS(newInstance)(JNIEnv *env,
                                                jobject thiz) {
+    //test code
+    int w;
+    int h;
+    KP::logI("jni get image");
+    KP::ImageParseUtil::getImageData("1",w,h);
     return (long long) new KP::KeepPlayer();
 }
 
@@ -97,8 +107,32 @@ JNI_CLASS(release)(JNIEnv *env, jobject thiz, jlong instance) {
         return;
     }
     delete (KP::KeepPlayer *) instance;
+    long long key = instance;
+    KP::GLThreadHelper::getInstance()->removeGLThread(key);
 }
 
+extern "C"
+JNIEXPORT void JNICALL
+JNI_CLASS(setSurface)(JNIEnv *env, jobject thiz, jlong instance,
+                      jobject surface) {
+    if (instance == 0) {
+        return;
+    }
+    long long key = instance;
+    KP::GLThreadHelper::getInstance()->setGLThread(env, surface, key);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+JNI_CLASS(updateSurfaceSize)(JNIEnv *env, jobject thiz,
+                                                             jlong instance, jobject surface,
+                                                             jint width, jint height) {
+    if (instance == 0) {
+        return;
+    }
+    long long key = instance;
+
+}
 
 extern "C"
 JNIEXPORT void JNICALL

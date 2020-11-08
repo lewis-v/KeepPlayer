@@ -60,7 +60,7 @@ NS_KP_BEGIN
             return "AudioDecoder";
         }
     private:
-        uint8_t *audio_out_buffer = nullptr;
+        uint8_t *audioOutBuffer = nullptr;
         AVFrame *audioFrame = nullptr;
         int currentBufferSize = 1024;
 

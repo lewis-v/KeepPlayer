@@ -15,7 +15,7 @@ NS_KP_BEGIN
     public:
         double time;
         int size;
-        uint8_t *data;
+        uint8_t *data = nullptr;
 
         ~AudioBuffer() {
             if (data != nullptr) {

@@ -42,11 +42,17 @@ NS_KP_BEGIN
 
         virtual void onQueuePause() {};
 
+        virtual void onQueueStart() {};
+
         virtual void onQueueRun() {};
 
         virtual void onQueueStop() {};
 
         void stopSync();
+
+        virtual int getWaitNextTIme() {
+            return 0;
+        }
 
     private:
         std::thread th;

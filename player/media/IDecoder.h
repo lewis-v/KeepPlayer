@@ -12,8 +12,6 @@
 #ifndef PLAYER_IDECODER_H
 #define PLAYER_IDECODER_H
 
-#endif //PLAYER_IDECODER_H
-
 NS_KP_BEGIN
     class IDecoder : public Base {
         virtual void resume() = 0;
@@ -56,3 +54,6 @@ NS_KP_BEGIN
         void onQueueStop() override;
     };
 NS_KP_END
+
+
+#endif //PLAYER_IDECODER_H

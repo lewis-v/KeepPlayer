@@ -5,6 +5,10 @@
 #ifndef PLAYER_VIDEODECODER_H
 #define PLAYER_VIDEODECODER_H
 
+extern "C" {
+
+#include <libswscale/swscale.h>
+};
 
 #include <string>
 #include "../base/Macros.h"
@@ -13,27 +17,56 @@
 #include "PacketQueue.h"
 
 NS_KP_BEGIN
-    class VideoDecoder : public IDecoder {
+    class IVideoDecoderListener : public Base {
     public:
-//        VideoDecoder(ParseResult *playInfo);
-//
-//        ~VideoDecoder();
-//
-//        virtual void resume() override;
-//
-//        virtual void pause() override;
-//
-//        virtual void stop() override;
-//
-//        virtual void addPacket(AVPacket avPacket) override;
-//
-//        virtual std::string getTag() override {
-//            return "VideoDecoder";
-//        }
+        virtual void onDecodeFinish(double time, AVFrame *videoFrame) = 0;
+    };
+
+    class SimpleVideoDecoderListener : public IVideoDecoderListener {
+    public:
+        SimpleVideoDecoderListener(std::function<void(double, AVFrame *)> func) {
+            decodeFinish = func;
+        }
+
+        virtual void onDecodeFinish(double time, AVFrame *videoFrame) override {
+            decodeFinish(time, videoFrame);
+        }
+
+    protected:
+        std::function<void(double, AVFrame *)> decodeFinish;
+    };
+
+    class IVideoDecoder : public SimpleDecoder {
+    public:
+        IVideoDecoder(ParseResult *playInfo) : SimpleDecoder(playInfo) {}
+
+        ~IVideoDecoder() {
+            KP_SAFE_DELETE(decoderListener)
+        }
+
+        virtual void setVideoDecoderListener(IVideoDecoderListener *listener) {
+            KP_SAFE_DELETE(decoderListener)
+            decoderListener = listener;
+        }
+
+    protected:
+        IVideoDecoderListener *decoderListener = nullptr;
+    };
+
+    class VideoDecoder : public IVideoDecoder {
+    public:
+        VideoDecoder(ParseResult *playInfo);
+
+        ~VideoDecoder();
+
+        virtual std::string getTag() override {
+            return "VideoDecoder";
+        }
 
     private:
-        PacketQueue packetQueue;
-        ParseResult *playInfo = nullptr;
+        AVFrame *videoFrame = nullptr;
+
+        void decodeIml(AVPacket avPacket);
     };
 NS_KP_END
 

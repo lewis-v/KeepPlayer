@@ -12,4 +12,5 @@
 
 #define KP_FF_TIME_MS(ts)               (av_rescale(ts, 1000, AV_TIME_BASE))
 #define KP_MS_FF_TIME(ms)               (av_rescale(ms, AV_TIME_BASE, 1000))
+
 #endif //PLAYER_MACROS_H
