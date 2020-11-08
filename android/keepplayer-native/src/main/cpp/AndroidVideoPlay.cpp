@@ -41,10 +41,13 @@ NS_KP_BEGIN
 
     AndroidVideoPlay::~AndroidVideoPlay() {
         while (!bufferQueue.empty()) {
-            delete bufferQueue.front();
+            av_frame_free(&bufferQueue.front());
             bufferQueue.pop();
         }
         KP_SAFE_DELETE(render)
+        if (swsContext != nullptr) {
+            sws_freeContext(swsContext);
+        }
     }
 
     void AndroidVideoPlay::resume() {

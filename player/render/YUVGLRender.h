@@ -31,6 +31,9 @@ NS_KP_BEGIN
         GLint yTextureLocation = -1;
         GLint uTextureLocation = -1;
         GLint vTextureLocation = -1;
+        GLuint yTexture = 0;
+        GLuint uTexture = 0;
+        GLuint vTexture = 0;
         GLuint ebo;
         GLuint vao;
         GLuint vbo;
@@ -38,6 +41,8 @@ NS_KP_BEGIN
         bool initProgram();
 
         bool parseVertexAttribs();
+
+        void initTexture(GLuint* texture);
     };
 NS_KP_END
 

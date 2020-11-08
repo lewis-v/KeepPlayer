@@ -12,8 +12,6 @@ NS_KP_BEGIN
 #define TEXTURE_COORDINATES_COMPONENT_COUNT 2
 #define STRIDE ((POSITION_COMPONENT_COUNT + TEXTURE_COORDINATES_COMPONENT_COUNT)*BYTES_PER_FLOAT)
 
-//    static const GLfloat texCoords[] = {0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f};
-//    static const GLfloat _vertices[] = {0.0f, 0.0f};
     static const GLfloat VERTEX_DATA[] = { 0.0f, 0.0f, 0.5f, 0.5f, -1.0f, -1.0f, 0.0f, 1.0f,
                               1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, -1.0f, 1.0f, 0.0f,
                               0.0f, -1.0f, -1.0f, 0.0f, 1.0f };
@@ -29,22 +27,21 @@ NS_KP_BEGIN
 
 logD("render width:%d  height:%d y_width:%d u_width:%d  v_width:%d", width, height, y_width, u_width, v_width);
         auto h = height;
-        glViewport(0, 0, y_width, h);
         //Y
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(yTextureLocation));
+        glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(yTexture));
         glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, y_width, h, 0, GL_LUMINANCE,
                      GL_UNSIGNED_BYTE, y);
         glUniform1i(yTextureLocation, 0);
         //U
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(uTextureLocation));
+        glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(uTexture));
         glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, u_width, h / 2, 0,
                      GL_LUMINANCE, GL_UNSIGNED_BYTE, u);
         glUniform1i(uTextureLocation, 1);
         //V
         glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(vTextureLocation));
+        glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(vTexture));
         glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, v_width, h / 2, 0,
                      GL_LUMINANCE, GL_UNSIGNED_BYTE, v);
         glUniform1i(vTextureLocation, 2);
@@ -57,7 +54,6 @@ logD("render width:%d  height:%d y_width:%d u_width:%d  v_width:%d", width, heig
         glEnableVertexAttribArray(static_cast<GLuint>(vertAttributeTexCoordLocation));
 
         glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
-//        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }
 
     YUVGLRender::YUVGLRender() {
@@ -67,6 +63,9 @@ logD("render width:%d  height:%d y_width:%d u_width:%d  v_width:%d", width, heig
         if (!parseVertexAttribs()) {
             return;
         }
+        initTexture(&yTexture);
+        initTexture(&uTexture);
+        initTexture(&vTexture);
     }
 
     YUVGLRender::~YUVGLRender() {
@@ -131,26 +130,26 @@ uniform sampler2D tex_u;
 uniform sampler2D tex_v;
 
 varying vec2 v_TextureCoordinates;
+const mat3 g_bt709 = mat3(1.164,1.164,1.164,
+               0.0,-0.213,2.112,
+               1.793,-0.533,0.0);
 
 void main()
 {
-// vec4 c = vec4((texture2D(tex_y, v_TextureCoordinates).r - 16./255.) * 1.164);
-// vec4 U = vec4(texture2D(tex_u, v_TextureCoordinates).r - 128./255.);
-// vec4 V = vec4(texture2D(tex_v, v_TextureCoordinates).r - 128./255.);
-// c += V * vec4(1.596, -0.813, 0, 0);
-// c += U * vec4(0, -0.392, 2.017, 0);
-// c.a = 1.0;
-// gl_FragColor = c;
 
-        float y = texture2D(tex_y, v_TextureCoordinates).r;
-        float u = texture2D(tex_u, v_TextureCoordinates).r - 0.5;
-        float v = texture2D(tex_v, v_TextureCoordinates).r - 0.5;
-        float r = y + 1.402 * v;
-        float g = y - 0.344 * u - 0.714 * v;
-        float b = y + 1.772 * u;
-        gl_FragColor = vec4(r, g, b, 1.0);
+    vec3 yuv;
+    vec3 rgb;
 
-//        gl_FragColor = texture2D(tex_y, v_TextureCoordinates);
+    yuv.r = texture2D(tex_y,v_TextureCoordinates).r - (16.0 / 255.0);
+    yuv.g = texture2D(tex_u,v_TextureCoordinates).r - 0.5;//
+    yuv.b = texture2D(tex_v,v_TextureCoordinates).r - 0.5;
+
+    rgb = g_bt709*yuv;
+
+    gl_FragColor = vec4(rgb,1.0);
+
+
+
 }
 
     )";
@@ -231,6 +230,18 @@ void main()
             return false;
         }
         return true;
+    }
+
+    void YUVGLRender::initTexture(GLuint* texture) {
+        glGenTextures(1, texture);
+        GLUtil::checkGLError("glGenTextures");
+        glBindTexture(GL_TEXTURE_2D, *texture);
+        GLUtil::checkGLError("glBindTexture 1");
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        GLUtil::checkGLError("glTexParameteri");
     }
 
 
