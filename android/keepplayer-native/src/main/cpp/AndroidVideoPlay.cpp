@@ -74,6 +74,7 @@ NS_KP_BEGIN
         if (glThread) {
             glThread->queueStop();
         }
+        flush();
     }
 
     void AndroidVideoPlay::playFrame(double time, AVFrame *videoFrame) {
