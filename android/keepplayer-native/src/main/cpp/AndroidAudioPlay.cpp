@@ -182,7 +182,7 @@ NS_KP_BEGIN
                 auto data = static_cast<uint8_t *>(malloc(sizeof(uint8_t)));
                 (*pcmBufferQueue)->Enqueue(pcmBufferQueue, data,
                                            sizeof(uint8_t));
-                logD("audio push buffer null");
+//                logD("audio push buffer null");
             }
         }
     }

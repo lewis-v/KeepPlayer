@@ -19,7 +19,7 @@ void custom_decoderLog(void *ptr, int level, const char *fmt, va_list vl) {
     } else if (level == AV_LOG_WARNING) {
         KP::logW(fmt, vl);
     } else {
-        KP::logI(fmt, vl);
+//        KP::logD(fmt, vl);
     }
 }
 
@@ -41,7 +41,7 @@ JNIEXPORT jlong JNICALL JNI_CLASS(newInstance)(JNIEnv *env,
     int w;
     int h;
     KP::logI("jni get image");
-    KP::ImageParseUtil::getImageData("1",w,h);
+    KP::ImageParseUtil::getImageData("1", w, h);
     return (long long) new KP::KeepPlayer();
 }
 
@@ -124,6 +124,16 @@ JNI_CLASS(release)(JNIEnv *env, jobject thiz, jlong instance) {
 
 extern "C"
 JNIEXPORT void JNICALL
+JNI_CLASS(seekTo)(JNIEnv *env, jobject thiz, jlong instance,
+                  jlong seek_time) {
+    if (instance == 0) {
+        return;
+    }
+    ((KP::KeepPlayer *) instance)->seek(seek_time);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
 JNI_CLASS(setSurface)(JNIEnv *env, jobject thiz, jlong instance,
                       jobject surface) {
     if (instance == 0) {
@@ -136,8 +146,8 @@ JNI_CLASS(setSurface)(JNIEnv *env, jobject thiz, jlong instance,
 extern "C"
 JNIEXPORT void JNICALL
 JNI_CLASS(updateSurfaceSize)(JNIEnv *env, jobject thiz,
-                                                             jlong instance, jobject surface,
-                                                             jint width, jint height) {
+                             jlong instance, jobject surface,
+                             jint width, jint height) {
     if (instance == 0) {
         return;
     }

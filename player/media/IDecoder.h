@@ -21,6 +21,8 @@ NS_KP_BEGIN
         virtual void stop() = 0;
 
         virtual void addPacket(AVPacket avPacket) = 0;
+
+        virtual void flush() = 0;
     };
 
     class SimpleDecoder : public IDecoder, BaseQueueController {
@@ -38,6 +40,8 @@ NS_KP_BEGIN
         virtual void stop() override;
 
         virtual void addPacket(AVPacket avPacket) override;
+
+        virtual void flush() override ;
 
     protected:
         PacketQueue packetQueue;

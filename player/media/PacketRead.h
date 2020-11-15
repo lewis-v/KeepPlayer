@@ -105,10 +105,12 @@ NS_KP_BEGIN
             return "PacketRead";
         }
 
+        virtual int getWaitNextTIme() override ;
 
     private:
         ParseResult *playInfo = nullptr;
         AVPacket avPacket{};
+        bool isComplete = false;
 
         void onQueueRun() override;
 

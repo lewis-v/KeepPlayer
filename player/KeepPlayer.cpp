@@ -152,6 +152,12 @@ NS_KP_BEGIN
                 },
                 [&] {
                     //flush
+                    if (audioDecoder != nullptr) {
+                        audioDecoder->flush();
+                    }
+                    if (videoDecoder != nullptr) {
+                        videoDecoder->flush();
+                    }
                 }
         ));
         audioDecoder->setAudioDecoderListener(

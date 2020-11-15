@@ -40,8 +40,10 @@ NS_KP_BEGIN
             }
             onQueueRun();
             int next = getWaitNextTIme();
-            if (next > 0) {
+            if (next >= 0) {
                 taskQueue.waitNextWithMaxTime(next);
+            } else {
+                taskQueue.waitNext();
             }
         }
         onQueueStop();

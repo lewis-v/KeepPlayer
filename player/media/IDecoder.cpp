@@ -59,4 +59,8 @@ NS_KP_BEGIN
         stopSync();
     }
 
+    void SimpleDecoder::flush() {
+        packetQueue.clear();
+    }
+
 NS_KP_END

@@ -77,7 +77,6 @@ NS_KP_BEGIN
     }
 
     void AndroidVideoPlay::playFrame(double time, AVFrame *videoFrame) {
-        logD("play start");
 #ifdef RENDER_RGB
         std::unique_lock<std::mutex> lock(queueMutex);
         while (bufferQueue.size() > MAX_CACHE_AV_FRAME_SIZE) {

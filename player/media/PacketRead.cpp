@@ -23,19 +23,15 @@ NS_KP_BEGIN
     void PacketRead::seek(long long time) {
         taskQueue.postTask([&] {
             if (playInfo != nullptr) {
-                auto seekIndex = playInfo->audioIndex;
-                if (playInfo->hasVideoStream()) {
-                    seekIndex = playInfo->videoIndex;
-                }
-                if (seekIndex == -1) return;
+                readListener != nullptr ? readListener->onFlush() : void();
                 auto pos = KP_MS_FF_TIME(time);
-                auto ret = avformat_seek_file(playInfo->pFormatContext, seekIndex, INT64_MIN, pos,
-                                              INT64_MAX, ~AVSEEK_FLAG_BYTE);
+                auto ret = avformat_seek_file(playInfo->pFormatContext, -1, INT64_MIN, pos,
+                                              INT64_MAX, 0);
+                logI("seek time %lld  pos %lld", time, pos);
                 if (ret < 0) {
                     logE("seek fail ret:%d time:%lld", ret, time);
                 } else {
-                    readListener != nullptr ? readListener->onFlush() : void();
-                    //todo flush notify
+                    isComplete = false;
                 }
             }
         });
@@ -45,7 +41,9 @@ NS_KP_BEGIN
         if (playInfo == nullptr) {
             return;
         }
-        readIml();
+        if (!isComplete) {
+            readIml();
+        }
     }
 
     void PacketRead::readIml() {
@@ -56,6 +54,8 @@ NS_KP_BEGIN
 
                     break;
                 case AVERROR_EOF://读到结尾了
+                    logI("read complete");
+                    isComplete = true;
                     //todo 刷buffer,传一个data为null和size为0来刷
 //                    avPacket.data = nullptr;
 //                    avPacket.size = 0;
@@ -118,6 +118,13 @@ NS_KP_BEGIN
         } else {
             av_packet_unref(&avPacket);
         }
+    }
+
+    int PacketRead::getWaitNextTIme() {
+        if (isComplete) {
+            return -1;
+        }
+        return BaseQueueController::getWaitNextTIme();
     }
 
 NS_KP_END

@@ -26,8 +26,6 @@ NS_KP_BEGIN
         GLint u_width = frame->linesize[1];
         GLint v_width = frame->linesize[2];
 
-        logD("render width:%d  height:%d y_width:%d u_width:%d  v_width:%d", width, height, y_width,
-             u_width, v_width);
         auto h = height;
         //Y
         glActiveTexture(GL_TEXTURE0);

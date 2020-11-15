@@ -47,6 +47,8 @@ object KeepPlayerNative  {
 
     external fun updateSurfaceSize(instance: Long, surface: Surface, width: Int, height: Int)
 
+    external fun seekTo(instance: Long, seekTime: Long);
+
     external fun test()
 
 

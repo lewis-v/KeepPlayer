@@ -34,6 +34,10 @@ class KeepPlayer {
         KeepPlayerNative.reset(instance)
     }
 
+    fun seekTo(time: Long) {
+        KeepPlayerNative.seekTo(instance, time)
+    }
+
     fun release() {
         KeepPlayerNative.release(instance)
         instance = 0

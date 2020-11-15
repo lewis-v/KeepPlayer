@@ -3,6 +3,7 @@ package com.lewis.keepplayer.demo
 import android.os.Bundle
 import android.util.Log
 import android.view.Surface
+import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
 import com.lewis.keepplayer.ISurfaceListener
 import com.lewis.keepplayer.KeepPlayer
@@ -64,5 +65,20 @@ class MainActivity : AppCompatActivity() {
         bt5.setOnClickListener {
             player.reset()
         }
+        seek.setOnSeekBarChangeListener(object:SeekBar.OnSeekBarChangeListener{
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                Log.i(TAG, "onProgressChanged $progress")
+                player.seekTo(3*1000);
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                Log.i(TAG, "onStartTrackingTouch ${seekBar?.progress}")
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                Log.i(TAG, "onStopTrackingTouch ${seekBar?.progress}")
+            }
+
+        })
     }
 }
