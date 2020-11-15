@@ -35,9 +35,12 @@ NS_KP_BEGIN
                                     SWS_BICUBIC,
                                     nullptr, nullptr, nullptr);
 #endif
+        if (playInfo->hasAudioStream()) {//有音频流才计算音视频间隔上限
+            audioMaxDiffTime = 1000 / playInfo->videoInfo->fps * 1.3;//设置为相差大于1.3的帧时间才认为要等下次在渲染,这里刚好为1的话很有可能在下次来的时候时间就小于音频时间了
+        }
         auto glThread = GLThreadHelper::getInstance()->getGLThread(glThreadKey);
         if (glThread) {
-            glThread->setFps(30);
+            glThread->setFps(playInfo->videoInfo->fps);
             glThread->setFrameDrawCallback([&] {
                 return onDrawFrame();
             });
@@ -45,10 +48,7 @@ NS_KP_BEGIN
     }
 
     AndroidVideoPlay::~AndroidVideoPlay() {
-        while (!bufferQueue.empty()) {
-            av_frame_free(&bufferQueue.front());
-            bufferQueue.pop();
-        }
+        flush();
         KP_SAFE_DELETE(render)
         if (swsContext != nullptr) {
             sws_freeContext(swsContext);
@@ -130,7 +130,36 @@ NS_KP_BEGIN
         }
         std::unique_lock<std::mutex> lock(queueMutex);
         if (!bufferQueue.empty()) {
-            auto *frame = bufferQueue.front();
+            AVFrame *frame = nullptr;
+            if (progressSync == nullptr) {//不做同步
+                frame = bufferQueue.front();
+            } else if (playInfo->hasAudioStream()) {//有音频流是需要参照音频的进度
+                while (!bufferQueue.empty()) {
+                    frame = bufferQueue.front();
+                    double currentTime = frame->pts *
+                                         av_q2d(playInfo->pFormatContext->streams[playInfo->videoIndex]->time_base);
+                    auto audioProgress = progressSync->getProgress();
+                    if (currentTime < audioProgress) {
+                        av_frame_free(&frame);
+                        frame = nullptr;
+                        bufferQueue.pop();
+                    }
+                    else if (currentTime - audioProgress > audioMaxDiffTime) {//这帧超前音频太多,那就先不渲染,等下次循环再看看有没有到
+                        return result;
+                    } else {
+                        break;
+                    }
+                }
+            } else {//没有音频流的时候通过视频流来设置播放进度
+                frame = bufferQueue.front();
+                double currentTime = frame->pts *
+                                     av_q2d(playInfo->pFormatContext->streams[playInfo->videoIndex]->time_base);
+                progressSync->setProgress(currentTime);
+            }
+            if (frame == nullptr) {
+                queueCond.notify_one();
+                return result;
+            }
             if (render != nullptr) {
                 result = true;
                 render->render(frame, frame->width,
@@ -141,6 +170,15 @@ NS_KP_BEGIN
             queueCond.notify_one();
         }
         return result;
+    }
+
+    void AndroidVideoPlay::flush() {
+        std::unique_lock<std::mutex> lock(queueMutex);
+        while (!bufferQueue.empty()) {
+            av_frame_free(&bufferQueue.front());
+            bufferQueue.pop();
+        }
+        queueCond.notify_one();
     }
 
 NS_KP_END

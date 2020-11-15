@@ -8,6 +8,7 @@
 
 #include "../base/Macros.h"
 #include "../base/Base.h"
+#include "ProgressSync.h"
 
 NS_KP_BEGIN
     class IAudioPlay : public Base {
@@ -21,8 +22,14 @@ NS_KP_BEGIN
 
         virtual void playFrame(double time, int dataSize, uint8_t *data) = 0;
 
-    protected:
+        virtual void flush() = 0;
 
+        void setProgressSync(ProgressSync *progressSync) {
+            this->progressSync = progressSync;
+        }
+
+    protected:
+        ProgressSync *progressSync = nullptr;
     };
 
     class AudioPlay : public IAudioPlay {

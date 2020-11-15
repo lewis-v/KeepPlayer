@@ -33,6 +33,8 @@ NS_KP_BEGIN
 
         virtual void playFrame(double time, AVFrame* videoFrame) override;
 
+        virtual void flush() override ;
+
     private:
 #ifdef RENDER_RGB
         static const AVPixelFormat FORMAT = AV_PIX_FMT_RGB24;//AV_PIX_FMT_YUV420P;//AV_PIX_FMT_RGBA
@@ -45,6 +47,7 @@ NS_KP_BEGIN
         IRender* render = nullptr;
         std::mutex queueMutex;
         std::condition_variable queueCond;
+        double audioMaxDiffTime = 33;
 
         SwsContext *swsContext = nullptr;
 

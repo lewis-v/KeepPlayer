@@ -176,12 +176,16 @@ NS_KP_BEGIN
 //                logI("pushBuffer %d size:%d", audioNode->data->size * sizeof(uint8_t), size);
                 KP_SAFE_DELETE(audioNode->data)
                 audioNode->data = nullptr;
+                if (progressSync != nullptr) {
+                    progressSync->setProgress(audioNode->time);
+                }
                 bufferQueue.pop();
                 queueCond.notify_one();
             } else {
-                auto data = static_cast<uint8_t *>(malloc(sizeof(uint8_t)));
+                auto* data = static_cast<uint8_t *>(malloc(sizeof(uint8_t)));
                 (*pcmBufferQueue)->Enqueue(pcmBufferQueue, data,
                                            sizeof(uint8_t));
+                free(data);
 //                logD("audio push buffer null");
             }
         }
@@ -238,6 +242,10 @@ NS_KP_BEGIN
             engineObject = nullptr;
             engineEngine = nullptr;
         }
+    }
+
+    void AndroidAudioPlay::flush() {
+        clearNode();
     }
 
 

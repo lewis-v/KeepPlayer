@@ -28,6 +28,7 @@ NS_KP_BEGIN
         ~ParseVideoResult();
         AVCodecContext *videoCodeContext = nullptr;
         AVCodec *pCodec = nullptr;
+        int fps = 30;
     };
 
     class ParseResult {

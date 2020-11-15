@@ -28,6 +28,8 @@ NS_KP_BEGIN
 
         virtual void stop() override;
 
+        virtual void flush() override ;
+
         void pushBuffer();
 
         virtual void playFrame(double time, int dataSize, uint8_t *data) override;

@@ -28,8 +28,8 @@ NS_KP_BEGIN
             if (result.isSuccess()) {
                 logI("prepare success path:%s", path.c_str());
                 parseResult = result.data;
-                prepareListener != nullptr ? prepareListener->onPrepare(this) : void();
                 prepareFinish();
+                prepareListener != nullptr ? prepareListener->onPrepare(this) : void();
             } else {
                 errorListener != nullptr ? errorListener->onError(this, result.code, result.extra)
                                          : void();
@@ -128,10 +128,32 @@ NS_KP_BEGIN
             return;
         }
         read = new PacketRead(parseResult);
-        audioDecoder = new AudioDecoder(parseResult);
-        audioPlay = new AndroidAudioPlay(parseResult);
-        videoDecoder = new VideoDecoder(parseResult);
-        videoPlay = new AndroidVideoPlay(parseResult, (long long) this);
+        progressSync = new ProgressSync();
+        if (parseResult->hasAudioStream()) {
+            audioDecoder = new AudioDecoder(parseResult);
+            audioPlay = new AndroidAudioPlay(parseResult);
+            audioDecoder->setAudioDecoderListener(
+                    new SimpleAudioDecoderListener([&](double time, int dataSize, uint8_t *data) {
+                        if (audioPlay == nullptr) {
+                            return;
+                        }
+                        audioPlay->playFrame(time, dataSize, data);
+                    }));
+            audioPlay->setProgressSync(progressSync);
+
+        }
+        if (parseResult->hasVideoStream()) {
+            videoDecoder = new VideoDecoder(parseResult);
+            videoPlay = new AndroidVideoPlay(parseResult, (long long) this);
+            videoDecoder->setVideoDecoderListener(
+                    new SimpleVideoDecoderListener([&](double time, AVFrame *videoFrame) {
+                        if (videoPlay == nullptr) {
+                            return;
+                        }
+                        videoPlay->playFrame(time, videoFrame);
+                    }));
+            videoPlay->setProgressSync(progressSync);
+        }
 
         read->setListener(new SimplePacketReadListener(
                 [&](AVPacket avPacket) {
@@ -155,25 +177,19 @@ NS_KP_BEGIN
                     if (audioDecoder != nullptr) {
                         audioDecoder->flush();
                     }
+                    if (audioPlay != nullptr) {
+                        audioPlay->flush();
+                    }
                     if (videoDecoder != nullptr) {
                         videoDecoder->flush();
                     }
+                    if (videoPlay != nullptr) {
+                        videoPlay->flush();
+                    }
                 }
         ));
-        audioDecoder->setAudioDecoderListener(
-                new SimpleAudioDecoderListener([&](double time, int dataSize, uint8_t *data) {
-                    if (audioPlay == nullptr) {
-                        return;
-                    }
-                    audioPlay->playFrame(time, dataSize, data);
-                }));
-        videoDecoder->setVideoDecoderListener(
-                new SimpleVideoDecoderListener([&](double time, AVFrame *videoFrame) {
-                    if (videoPlay == nullptr) {
-                        return;
-                    }
-                    videoPlay->playFrame(time, videoFrame);
-                }));
+
+
     }
 
     KeepPlayer::~KeepPlayer() {
@@ -184,6 +200,8 @@ NS_KP_BEGIN
         KP_SAFE_DELETE(videoPlay)
 
         KP_SAFE_DELETE(parseResult)
+
+        KP_SAFE_DELETE(progressSync)
 
         KP_SAFE_DELETE(prepareListener)
         KP_SAFE_DELETE(completionListener)

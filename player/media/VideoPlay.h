@@ -8,8 +8,10 @@
 extern "C" {
 #include <libavutil/frame.h>
 };
+
 #include "../base/Macros.h"
 #include "../base/Base.h"
+#include "ProgressSync.h"
 
 NS_KP_BEGIN
     class IVideoPlay : public Base {
@@ -21,10 +23,16 @@ NS_KP_BEGIN
 
         virtual void stop() = 0;
 
-        virtual void playFrame(double time, AVFrame* videoFrame) = 0;
+        virtual void playFrame(double time, AVFrame *videoFrame) = 0;
+
+        virtual void flush() = 0;
+
+        void setProgressSync(ProgressSync *progressSync) {
+            this->progressSync = progressSync;
+        }
 
     protected:
-
+        ProgressSync *progressSync = nullptr;
     };
 NS_KP_END
 

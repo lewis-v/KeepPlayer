@@ -40,6 +40,8 @@ list(APPEND SRC_LIST
         ${KEEP_DIR}/media/VideoDecoder.h
         ${KEEP_DIR}/media/IDecoder.h
         ${KEEP_DIR}/media/IDecoder.cpp
+        ${KEEP_DIR}/media/ProgressSync.h
+        ${KEEP_DIR}/media/ProgressSync.cpp
         ${KEEP_DIR}/model/ParseResult.h
         ${KEEP_DIR}/model/ParseResult.cpp
         ${KEEP_DIR}/model/Result.h

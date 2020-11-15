@@ -92,6 +92,8 @@ NS_KP_BEGIN
         IVideoDecoder *videoDecoder = nullptr;
         IVideoPlay *videoPlay = nullptr;
 
+        ProgressSync *progressSync = nullptr;
+
         void prepareFinish();
 
     };

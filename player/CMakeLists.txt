@@ -36,6 +36,6 @@ add_executable(player
         model/AudioBuffer.cpp
         model/AudioBuffer.h
         model/BaseNode.cpp
-        model/BaseNode.h media/VideoDecoder.cpp media/VideoDecoder.h media/VideoPlay.cpp media/VideoPlay.h media/IDecoder.h media/IDecoder.cpp base/GLUtil.h model/VideoYUVBuffer.cpp model/VideoYUVBuffer.h render/YUVGLRender.cpp render/YUVGLRender.h render/IRender.h render/BaseGLRender.cpp render/BaseGLRender.h render/RGBGLRender.cpp render/RGBGLRender.h)
+        model/BaseNode.h media/VideoDecoder.cpp media/VideoDecoder.h media/VideoPlay.cpp media/VideoPlay.h media/IDecoder.h media/IDecoder.cpp base/GLUtil.h model/VideoYUVBuffer.cpp model/VideoYUVBuffer.h render/YUVGLRender.cpp render/YUVGLRender.h render/IRender.h render/BaseGLRender.cpp render/BaseGLRender.h render/RGBGLRender.cpp render/RGBGLRender.h media/ProgressSync.cpp media/ProgressSync.h)
 
 include_directories(${CMAKE_SOURCE_DIR}/../includes/ffmpeg)
