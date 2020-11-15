@@ -21,24 +21,9 @@ NS_KP_BEGIN
 
         virtual void stop() = 0;
 
-        virtual void playFrame(double time, AVFrame *videoFrame) = 0;
+        virtual void playFrame(double time, AVFrame* videoFrame) = 0;
 
     protected:
-
-    };
-
-    class VideoPlay : public IVideoPlay {
-    public:
-        VideoPlay();
-
-        virtual void resume() override;
-
-        virtual void pause() override;
-
-        virtual void stop() override;
-
-        virtual void playFrame(double time, AVFrame *videoFrame) override;
-
 
     };
 NS_KP_END

@@ -114,6 +114,8 @@ NS_KP_BEGIN
 
         void readIml();
 
+        void notifyIml();
+
         void onQueueResume() override;
 
         void onQueuePause() override;

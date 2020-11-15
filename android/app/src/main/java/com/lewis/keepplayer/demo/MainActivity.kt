@@ -38,6 +38,8 @@ class MainActivity : AppCompatActivity() {
 
         bt1.setOnClickListener {
             player.setPath("https://tt-ugc-v-cdnqn.52tt.com/videos-dst/5f75a91722f3270001c1f4dc_0_1601546519_0")
+//            player.setPath("https://vkceyugu.cdn.bspapp.com/VKCEYUGU-imgbed/762a380c-152b-4880-a460-1c5cd8190e6f.mp4")
+//            player.setPath("https://tt-ugc-v-cdnqn.52tt.com/videos-shumei/5fa7da33be5398000170ce5c_0_1604835891_0")
             Thread {
 
                 player.prepare()

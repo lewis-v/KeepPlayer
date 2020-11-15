@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10.2)
 
-option(RENDER_RGB "use rgb render" ON)
+option(RENDER_RGB "use rgb render" OFF)
 
 MESSAGE("current dir ${CMAKE_SOURCE_DIR}")
 set(KEEP_DIR ${CMAKE_SOURCE_DIR}/../../player)

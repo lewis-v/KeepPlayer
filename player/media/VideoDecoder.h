@@ -19,21 +19,21 @@ extern "C" {
 NS_KP_BEGIN
     class IVideoDecoderListener : public Base {
     public:
-        virtual void onDecodeFinish(double time, AVFrame *videoFrame) = 0;
+        virtual void onDecodeFinish(double time, AVFrame* videoFrame) = 0;
     };
 
     class SimpleVideoDecoderListener : public IVideoDecoderListener {
     public:
-        SimpleVideoDecoderListener(std::function<void(double, AVFrame *)> func) {
+        SimpleVideoDecoderListener(std::function<void(double, AVFrame* )> func) {
             decodeFinish = func;
         }
 
-        virtual void onDecodeFinish(double time, AVFrame *videoFrame) override {
+        virtual void onDecodeFinish(double time, AVFrame* videoFrame) override {
             decodeFinish(time, videoFrame);
         }
 
     protected:
-        std::function<void(double, AVFrame *)> decodeFinish;
+        std::function<void(double, AVFrame* )> decodeFinish;
     };
 
     class IVideoDecoder : public SimpleDecoder {
@@ -64,9 +64,9 @@ NS_KP_BEGIN
         }
 
     private:
-        AVFrame *videoFrame = nullptr;
+        AVFrame *videoFrame;
 
-        void decodeIml(AVPacket avPacket);
+        void decodeIml(AVPacket &avPacket);
     };
 NS_KP_END
 

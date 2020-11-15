@@ -12,20 +12,22 @@ NS_KP_BEGIN
 #define TEXTURE_COORDINATES_COMPONENT_COUNT 2
 #define STRIDE ((POSITION_COMPONENT_COUNT + TEXTURE_COORDINATES_COMPONENT_COUNT)*BYTES_PER_FLOAT)
 
-    static const GLfloat VERTEX_DATA[] = { 0.0f, 0.0f, 0.5f, 0.5f, -1.0f, -1.0f, 0.0f, 1.0f,
-                              1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, -1.0f, 1.0f, 0.0f,
-                              0.0f, -1.0f, -1.0f, 0.0f, 1.0f };
+    static const GLfloat VERTEX_DATA[] = {0.0f, 0.0f, 0.5f, 0.5f, -1.0f, -1.0f, 0.0f, 1.0f,
+                                          1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, -1.0f,
+                                          1.0f, 0.0f,
+                                          0.0f, -1.0f, -1.0f, 0.0f, 1.0f};
 
     void YUVGLRender::render(AVFrame *frame, int width, int height) {
         glUseProgram(_program);
-        GLubyte* y = frame->data[0];
-        GLubyte* u = frame->data[1];
-        GLubyte* v = frame->data[2];
+        GLubyte *y = frame->data[0];
+        GLubyte *u = frame->data[1];
+        GLubyte *v = frame->data[2];
         GLint y_width = frame->linesize[0];
         GLint u_width = frame->linesize[1];
         GLint v_width = frame->linesize[2];
 
-logD("render width:%d  height:%d y_width:%d u_width:%d  v_width:%d", width, height, y_width, u_width, v_width);
+        logD("render width:%d  height:%d y_width:%d u_width:%d  v_width:%d", width, height, y_width,
+             u_width, v_width);
         auto h = height;
         //Y
         glActiveTexture(GL_TEXTURE0);
@@ -47,10 +49,13 @@ logD("render width:%d  height:%d y_width:%d u_width:%d  v_width:%d", width, heig
         glUniform1i(vTextureLocation, 2);
 
         //设置定点缓存指针
-        glVertexAttribPointer(static_cast<GLuint>(vertAttributePositionLocation), POSITION_COMPONENT_COUNT, GL_FLOAT, GL_FALSE, STRIDE, VERTEX_DATA);
+        glVertexAttribPointer(static_cast<GLuint>(vertAttributePositionLocation),
+                              POSITION_COMPONENT_COUNT, GL_FLOAT, GL_FALSE, STRIDE, VERTEX_DATA);
         glEnableVertexAttribArray(static_cast<GLuint>(vertAttributePositionLocation));
 
-        glVertexAttribPointer(static_cast<GLuint>(vertAttributeTexCoordLocation), POSITION_COMPONENT_COUNT,GL_FLOAT, GL_FALSE, STRIDE, &VERTEX_DATA[POSITION_COMPONENT_COUNT]);
+        glVertexAttribPointer(static_cast<GLuint>(vertAttributeTexCoordLocation),
+                              POSITION_COMPONENT_COUNT, GL_FLOAT, GL_FALSE, STRIDE,
+                              &VERTEX_DATA[POSITION_COMPONENT_COUNT]);
         glEnableVertexAttribArray(static_cast<GLuint>(vertAttributeTexCoordLocation));
 
         glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
@@ -179,7 +184,8 @@ void main()
         GLint status = 0;
         glGetProgramiv(_program, GL_LINK_STATUS, &status);
         if (GL_FALSE == status) {
-            logE("RenderTexture: ERROR: %s: failed to link program status:%d", __FUNCTION__, status);
+            logE("RenderTexture: ERROR: %s: failed to link program status:%d", __FUNCTION__,
+                 status);
             glDeleteProgram(_program);
             _program = 0;
             return false;
@@ -232,7 +238,7 @@ void main()
         return true;
     }
 
-    void YUVGLRender::initTexture(GLuint* texture) {
+    void YUVGLRender::initTexture(GLuint *texture) {
         glGenTextures(1, texture);
         GLUtil::checkGLError("glGenTextures");
         glBindTexture(GL_TEXTURE_2D, *texture);

@@ -51,14 +51,15 @@ NS_KP_BEGIN
                               GL_FALSE, 0, texCoords);
         glEnableVertexAttribArray(static_cast<GLuint>(vertAttributeTexCoordLocation));
 
+        logI("width:%D  height:%d", width, height);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(texture));
         GLUtil::checkGLError("rgb glBindTexture");
         glTexImage2D(GL_TEXTURE_2D,
                      0,
                      GL_RGB,
-                     frame->linesize[0],
-                     height,
+                     frame->width,
+                     frame->height,
                      0,
                      GL_RGB,
                      GL_UNSIGNED_BYTE,

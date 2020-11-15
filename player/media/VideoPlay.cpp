@@ -8,24 +8,5 @@
 
 NS_KP_BEGIN
 
-    VideoPlay::VideoPlay() {
-
-    }
-
-    void VideoPlay::resume() {
-
-    }
-
-    void VideoPlay::pause() {
-
-    }
-
-    void VideoPlay::stop() {
-
-    }
-
-    void VideoPlay::playFrame(double time, AVFrame *videoFrame) {
-
-    }
 NS_KP_END
 

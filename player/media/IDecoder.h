@@ -43,7 +43,7 @@ NS_KP_BEGIN
         PacketQueue packetQueue;
         ParseResult *playInfo = nullptr;
 
-        virtual void decodeIml(AVPacket avPacket) = 0;
+        virtual void decodeIml(AVPacket &avPacket) = 0;
 
         void onQueueRun() override;
 

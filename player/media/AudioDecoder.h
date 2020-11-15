@@ -64,7 +64,7 @@ NS_KP_BEGIN
         AVFrame *audioFrame = nullptr;
         int currentBufferSize = 1024;
 
-        void decodeIml(AVPacket avPacket);
+        void decodeIml(AVPacket &avPacket);
     };
 NS_KP_END
 

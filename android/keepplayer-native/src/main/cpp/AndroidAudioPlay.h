@@ -8,6 +8,7 @@
 #include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
 #include <mutex>
+#include <queue>
 #include "../../../../../player/base/Macros.h"
 #include "../../../../../player/media/AudioPlay.h"
 #include "../../../../../player/model/BaseNode.h"
@@ -27,7 +28,7 @@ NS_KP_BEGIN
 
         virtual void stop() override;
 
-        void pushBuffer(bool shouldWait);
+        void pushBuffer();
 
         virtual void playFrame(double time, int dataSize, uint8_t *data) override;
 
@@ -43,15 +44,11 @@ NS_KP_BEGIN
         SLAndroidSimpleBufferQueueItf pcmBufferQueue = nullptr;
         SLVolumeItf pcmPlayerVolume = nullptr;
 
-        BaseNode<AudioBuffer *> *audioNode = nullptr;
-        BaseNode<AudioBuffer *> *lastNode = nullptr;
+        std::queue<AudioBuffer *> bufferQueue;
         ParseResult *playInfo = nullptr;
 
-        std::mutex playMutex;
-        std::condition_variable playCond;
-
-        int size = 0;
-        bool isFirst = true;
+        std::mutex queueMutex;
+        std::condition_variable queueCond;
 
         void clearNode();
 

@@ -4,13 +4,14 @@
 
 #include "AndroidAudioPlay.h"
 #include "../../../../../player/base/Log.h"
+#include "../../../../../player/base/Config.h"
 
 NS_KP_BEGIN
 
     void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void *context) {
         if (context == nullptr) return;
-        auto play = (AndroidAudioPlay *) context;
-        play->pushBuffer(true);
+        auto *play = (AndroidAudioPlay *) context;
+        play->pushBuffer();
     }
 
 
@@ -31,28 +32,17 @@ NS_KP_BEGIN
         if (dataSize <= 0) {
             return;
         }
-        size++;
+        //todo 这里可能会加上一个buffer复用
         auto curr = new AudioBuffer();
         curr->data = static_cast<uint8_t *>(malloc(dataSize * sizeof(uint8_t)));
         memcpy(curr->data, data, dataSize * sizeof(uint8_t));
         curr->time = time;
         curr->size = dataSize;
-        auto node = new BaseNode<AudioBuffer *>();
-        node->data = curr;
-        std::unique_lock<std::mutex> lck(playMutex);
-        if (lastNode == nullptr) {
-            audioNode = node;
-            lastNode = node;
-        } else {
-            lastNode->next = node;
-            lastNode = node;
+        std::unique_lock<std::mutex> lck(queueMutex);
+        while (bufferQueue.size() > MAX_CACHE_AV_FRAME_SIZE) {
+            queueCond.wait(lck);
         }
-        playCond.notify_one();
-        if (isFirst) {
-            lck.unlock();
-            pushBuffer(false);
-            isFirst = false;
-        }
+        bufferQueue.emplace(curr);
     }
 
     bool AndroidAudioPlay::createEngine() {
@@ -175,36 +165,24 @@ NS_KP_BEGIN
         return true;
     }
 
-    void AndroidAudioPlay::pushBuffer(bool shouldWait) {
+    void AndroidAudioPlay::pushBuffer() {
         if (pcmBufferQueue != nullptr) {
-            std::unique_lock<std::mutex> lck(playMutex);
-            if (audioNode != nullptr) {
-                size--;
-                (*pcmBufferQueue)->Enqueue(pcmBufferQueue, audioNode->data->data,
-                                           static_cast<SLuint32>(audioNode->data->size *
+            std::unique_lock<std::mutex> lck(queueMutex);
+            if (!bufferQueue.empty()) {
+                auto *audioNode = bufferQueue.front();
+                (*pcmBufferQueue)->Enqueue(pcmBufferQueue, audioNode->data,
+                                           static_cast<SLuint32>(audioNode->size *
                                                                  sizeof(uint8_t)));
 //                logI("pushBuffer %d size:%d", audioNode->data->size * sizeof(uint8_t), size);
                 KP_SAFE_DELETE(audioNode->data)
                 audioNode->data = nullptr;
-                if (lastNode == audioNode) {
-                    KP_SAFE_DELETE(audioNode)
-                    lastNode = nullptr;
-                    audioNode = nullptr;
-                    return;
-                }
-                auto temp = audioNode;
-                audioNode = audioNode->next;
-                KP_SAFE_DELETE(temp)
-            } else if (shouldWait) {
-                playCond.wait(lck);
-                SLuint32 state = 0;
-                if (pcmPlayerPlay != nullptr) {
-                    (*pcmPlayerPlay)->GetPlayState(pcmPlayerPlay, &state);
-                    if (state == SL_PLAYSTATE_PLAYING) {
-                        lck.unlock();
-                        pushBuffer(true);
-                    }
-                }
+                bufferQueue.pop();
+                queueCond.notify_one();
+            } else {
+                auto data = static_cast<uint8_t *>(malloc(sizeof(uint8_t)));
+                (*pcmBufferQueue)->Enqueue(pcmBufferQueue, data,
+                                           sizeof(uint8_t));
+                logD("audio push buffer null");
             }
         }
     }
@@ -214,6 +192,7 @@ NS_KP_BEGIN
         if (SL_RESULT_SUCCESS != result) {
             logE("AndroidAudioPlay resume err %d", result);
         }
+        pushBuffer();
     }
 
     void AndroidAudioPlay::pause() {
@@ -232,15 +211,12 @@ NS_KP_BEGIN
     }
 
     void AndroidAudioPlay::clearNode() {
-        std::unique_lock<std::mutex> lck(playMutex);
-        lastNode = nullptr;
-        while (audioNode != nullptr) {
-            KP_SAFE_DELETE(audioNode->data)
-            lastNode = audioNode;
-            audioNode = audioNode->next;
-            KP_SAFE_DELETE(lastNode)
+        std::unique_lock<std::mutex> lck(queueMutex);
+        while (!bufferQueue.empty()) {
+            KP_SAFE_DELETE(bufferQueue.front());
+            bufferQueue.pop();
         }
-        size = 0;
+        queueCond.notify_one();
     }
 
     AndroidAudioPlay::~AndroidAudioPlay() {

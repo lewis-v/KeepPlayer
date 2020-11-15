@@ -11,6 +11,7 @@ extern "C" {
 };
 
 #include <queue>
+#include <mutex>
 #include "../../../../../player/base/Macros.h"
 #include "../../../../../player/media/VideoPlay.h"
 #include "../../../../../player/model/ParseResult.h"
@@ -30,7 +31,7 @@ NS_KP_BEGIN
 
         virtual void stop() override;
 
-        virtual void playFrame(double time, AVFrame *videoFrame) override;
+        virtual void playFrame(double time, AVFrame* videoFrame) override;
 
     private:
 #ifdef RENDER_RGB
@@ -39,11 +40,16 @@ NS_KP_BEGIN
         static const AVPixelFormat FORMAT = AV_PIX_FMT_YUV420P;//AV_PIX_FMT_YUV420P;//AV_PIX_FMT_RGBA
 #endif
         long long glThreadKey;
-        std::queue<AVFrame *> bufferQueue;
+        std::queue<AVFrame*> bufferQueue;
         ParseResult *playInfo = nullptr;
         IRender* render = nullptr;
+        std::mutex queueMutex;
+        std::condition_variable queueCond;
 
         SwsContext *swsContext = nullptr;
+
+        int targetWidth = 360;
+        int targetHeight = 640;
 
         bool onDrawFrame();
     };

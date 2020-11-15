@@ -25,7 +25,7 @@ NS_KP_BEGIN
         }
     }
 
-    void AudioDecoder::decodeIml(AVPacket avPacket) {
+    void AudioDecoder::decodeIml(AVPacket &avPacket) {
         if (audioFrame == nullptr || audioOutBuffer == nullptr) return;
         auto ret = avcodec_send_packet(playInfo->audioInfo->audioCodeContext, &avPacket);
         if (ret == 0) {
@@ -62,7 +62,7 @@ NS_KP_BEGIN
         } else {
             logE("audio decode Iml ret:%d", ret);
         }
-//        av_packet_unref(&avPacket);
+        av_packet_unref(&avPacket);
     }
 NS_KP_END
 

@@ -8,6 +8,7 @@ extern "C" {
 
 #include "AndroidVideoPlay.h"
 #include "GLThreadHelper.h"
+#include "../../../../../player/base/Config.h"
 
 #ifdef RENDER_RGB
 #include "../../../../../player/render/RGBGLRender.h"
@@ -22,14 +23,18 @@ NS_KP_BEGIN
     AndroidVideoPlay::AndroidVideoPlay(ParseResult *playInfo, long long key) {
         this->playInfo = playInfo;
         glThreadKey = key;
+#ifdef RENDER_RGB
+        targetWidth = playInfo->videoInfo->videoCodeContext->coded_width;
+        targetWidth = playInfo->videoInfo->videoCodeContext->coded_height;
         swsContext = sws_getContext(playInfo->videoInfo->videoCodeContext->width,
                                     playInfo->videoInfo->videoCodeContext->height,
                                     playInfo->videoInfo->videoCodeContext->pix_fmt,
-                                    playInfo->videoInfo->videoCodeContext->width,
-                                    playInfo->videoInfo->videoCodeContext->height,
+                                    targetWidth,//playInfo->videoInfo->videoCodeContext->width,
+                                    targetHeight,//playInfo->videoInfo->videoCodeContext->height,
                                     FORMAT,
-                                    SWS_FAST_BILINEAR,
+                                    SWS_BICUBIC,
                                     nullptr, nullptr, nullptr);
+#endif
         auto glThread = GLThreadHelper::getInstance()->getGLThread(glThreadKey);
         if (glThread) {
             glThread->setFps(30);
@@ -72,22 +77,47 @@ NS_KP_BEGIN
     }
 
     void AndroidVideoPlay::playFrame(double time, AVFrame *videoFrame) {
+        logD("play start");
+#ifdef RENDER_RGB
+        std::unique_lock<std::mutex> lock(queueMutex);
+        while (bufferQueue.size() > MAX_CACHE_AV_FRAME_SIZE) {
+            queueCond.wait(lock);
+        }
         auto videoScaleFrame = av_frame_alloc();
         av_image_alloc(videoScaleFrame->data, videoScaleFrame->linesize,
-                       playInfo->videoInfo->videoCodeContext->width,
-                       playInfo->videoInfo->videoCodeContext->height, FORMAT, 16);
+                       targetWidth,//playInfo->videoInfo->videoCodeContext->width,
+                       targetHeight,//playInfo->videoInfo->videoCodeContext->height,
+                       FORMAT, 16);
         auto result = sws_scale(swsContext, (const uint8_t *const *) videoFrame->data,
                                 videoFrame->linesize, 0,
                                 playInfo->videoInfo->videoCodeContext->height,
                                 videoScaleFrame->data,
                                 videoScaleFrame->linesize
         );
-        videoScaleFrame->width = videoFrame->width;
-        videoScaleFrame->height = result;
+        logI("frame w:%d  h%d  cw:%d   ch:%d  result:%d linesizeSrc:%d  linesizeDst:%d targetW:%d  targetH:%d", playInfo->videoInfo->videoCodeContext->width,
+             playInfo->videoInfo->videoCodeContext->height,
+             playInfo->videoInfo->videoCodeContext->coded_width,
+             playInfo->videoInfo->videoCodeContext->coded_height,
+             result,
+             videoFrame->linesize[0],
+             videoScaleFrame->linesize[0],
+             targetWidth,
+             targetHeight
+        );
+        videoScaleFrame->width = targetWidth;
+        videoScaleFrame->height = targetHeight;
         videoScaleFrame->linesize[0] = videoFrame->linesize[0];
         videoScaleFrame->linesize[1] = videoFrame->linesize[1];
         videoScaleFrame->linesize[2] = videoFrame->linesize[2];
         bufferQueue.push(videoScaleFrame);
+#else
+        std::unique_lock<std::mutex> lock(queueMutex);
+        while (bufferQueue.size() > MAX_CACHE_AV_FRAME_SIZE) {
+            queueCond.wait(lock);
+        }
+        auto* f = av_frame_clone(videoFrame);
+        bufferQueue.emplace(f);
+#endif
     }
 
     bool AndroidVideoPlay::onDrawFrame() {
@@ -99,15 +129,17 @@ NS_KP_BEGIN
             render = new YUVGLRender();
 #endif
         }
+        std::unique_lock<std::mutex> lock(queueMutex);
         if (!bufferQueue.empty()) {
-            auto frame = bufferQueue.front();
+            auto *frame = bufferQueue.front();
             if (render != nullptr) {
                 result = true;
                 render->render(frame, frame->width,
                                frame->height);
             }
-            av_frame_free(&frame);
             bufferQueue.pop();
+            av_frame_free(&frame);
+            queueCond.notify_one();
         }
         return result;
     }

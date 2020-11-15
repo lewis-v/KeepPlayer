@@ -57,6 +57,16 @@ NS_KP_BEGIN
                     break;
                 case AVERROR_EOF://读到结尾了
                     //todo 刷buffer,传一个data为null和size为0来刷
+//                    avPacket.data = nullptr;
+//                    avPacket.size = 0;
+//                    if (playInfo->hasVideoStream()) {
+//                        avPacket.stream_index = playInfo->videoIndex;
+//                        notifyIml();
+//                    }
+//                    if (playInfo->hasAudioStream()) {
+//                        avPacket.stream_index = playInfo->audioIndex;
+//                        notifyIml();
+//                    }
                     break;
                 default://其他错误
 
@@ -64,17 +74,7 @@ NS_KP_BEGIN
             }
             return;
         }
-        if (avPacket.stream_index == playInfo->videoIndex) {
-            if (readListener == nullptr || !readListener->onReadVideo(avPacket)) {
-                av_packet_unref(&avPacket);
-            }
-        } else if (avPacket.stream_index == playInfo->audioIndex) {
-            if (readListener == nullptr || !readListener->onReadAudio(avPacket)) {
-                av_packet_unref(&avPacket);
-            }
-        } else {
-            av_packet_unref(&avPacket);
-        }
+        notifyIml();
     }
 
     PacketRead::~PacketRead() {
@@ -104,6 +104,20 @@ NS_KP_BEGIN
 
     void PacketRead::onQueueStop() {
         //todo clear
+    }
+
+    void PacketRead::notifyIml() {
+        if (avPacket.stream_index == playInfo->videoIndex) {
+            if (readListener == nullptr || !readListener->onReadVideo(avPacket)) {
+                av_packet_unref(&avPacket);
+            }
+        } else if (avPacket.stream_index == playInfo->audioIndex) {
+            if (readListener == nullptr || !readListener->onReadAudio(avPacket)) {
+                av_packet_unref(&avPacket);
+            }
+        } else {
+            av_packet_unref(&avPacket);
+        }
     }
 
 NS_KP_END

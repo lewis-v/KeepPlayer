@@ -13,6 +13,16 @@
 
 #define JNI_CLASS(FUNC) Java_com_lewis_keepplayer_KeepPlayerNative_##FUNC
 
+void custom_decoderLog(void *ptr, int level, const char *fmt, va_list vl) {
+    if (level < AV_LOG_WARNING) {
+        KP::logE(fmt, vl);
+    } else if (level == AV_LOG_WARNING) {
+        KP::logW(fmt, vl);
+    } else {
+        KP::logI(fmt, vl);
+    }
+}
+
 extern "C"
 JNIEXPORT void JNICALL
 JNI_CLASS(init)(JNIEnv *env, jobject thiz,
@@ -21,6 +31,7 @@ JNI_CLASS(init)(JNIEnv *env, jobject thiz,
     avformat_network_init();
     KeepPlayer::KPLog::setLogCallBack(new KeepPlayer::KPAndroidLog());
     KP::JniCallBack::init(env, callback);
+    av_log_set_callback(custom_decoderLog);
 }
 
 extern "C"

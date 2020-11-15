@@ -42,7 +42,7 @@ NS_KP_BEGIN
 
         bool parseVertexAttribs();
 
-        void initTexture(GLuint* texture);
+        void initTexture(GLuint *texture);
     };
 NS_KP_END
 
