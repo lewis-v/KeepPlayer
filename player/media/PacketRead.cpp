@@ -56,17 +56,16 @@ NS_KP_BEGIN
                 case AVERROR_EOF://读到结尾了
                     logI("read complete");
                     isComplete = true;
-                    //todo 刷buffer,传一个data为null和size为0来刷
-//                    avPacket.data = nullptr;
-//                    avPacket.size = 0;
-//                    if (playInfo->hasVideoStream()) {
-//                        avPacket.stream_index = playInfo->videoIndex;
-//                        notifyIml();
-//                    }
-//                    if (playInfo->hasAudioStream()) {
-//                        avPacket.stream_index = playInfo->audioIndex;
-//                        notifyIml();
-//                    }
+                    avPacket.data = nullptr;
+                    avPacket.size = 0;
+                    if (playInfo->hasVideoStream()) {
+                        avPacket.stream_index = playInfo->videoIndex;
+                        notifyIml();
+                    }
+                    if (playInfo->hasAudioStream()) {
+                        avPacket.stream_index = playInfo->audioIndex;
+                        notifyIml();
+                    }
                     break;
                 default://其他错误
 
