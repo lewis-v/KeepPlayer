@@ -12,6 +12,8 @@ extern "C" {
 #include "../../includes/ffmpeg/libavutil/avutil.h"
 };
 NS_KP_BEGIN
+    static const BUFFER_ENOUGH_QUEUE_SIZE = 100;//等待足够的buffer才算够
+
     void PacketRead::resume() {
         queueResume();
     }
@@ -58,6 +60,7 @@ NS_KP_BEGIN
                     isComplete = true;
                     avPacket.data = nullptr;
                     avPacket.size = 0;
+                    //丢data为null的packet去刷新ffmpeg内部缓存
                     if (playInfo->hasVideoStream()) {
                         avPacket.stream_index = playInfo->videoIndex;
                         notifyIml();
@@ -74,6 +77,13 @@ NS_KP_BEGIN
             return;
         }
         notifyIml();
+        if (isComplete) {
+            audioReadTime = playInfo->duration;
+            videoReadTime = playInfo->duration;
+        }
+        if (readListener != nullptr) {
+            readListener->onReadProgress(std::min(audioReadTime, videoReadTime));
+        }
     }
 
     PacketRead::~PacketRead() {
@@ -107,10 +117,12 @@ NS_KP_BEGIN
 
     void PacketRead::notifyIml() {
         if (avPacket.stream_index == playInfo->videoIndex) {
+            videoReadTime = av_q2d(playInfo->pFormatContext->streams[playInfo->videoIndex]->time_base) * avPacket.dts;
             if (readListener == nullptr || !readListener->onReadVideo(avPacket)) {
                 av_packet_unref(&avPacket);
             }
         } else if (avPacket.stream_index == playInfo->audioIndex) {
+            audioReadTime = av_q2d(playInfo->pFormatContext->streams[playInfo->audioIndex]->time_base) * avPacket.dts;
             if (readListener == nullptr || !readListener->onReadAudio(avPacket)) {
                 av_packet_unref(&avPacket);
             }
@@ -124,6 +136,16 @@ NS_KP_BEGIN
             return -1;
         }
         return BaseQueueController::getWaitNextTIme();
+    }
+
+    PacketRead::PacketRead(ParseResult *playInfo, IPacketReadListener *readListener): playInfo(playInfo) {
+        setListener(readListener);
+        if (!playInfo->hasAudioStream()) {
+            audioReadTime = playInfo->duration;
+        }
+        if (!playInfo->hasVideoStream()) {
+            videoReadTime = playInfo->duration;
+        }
     }
 
 NS_KP_END

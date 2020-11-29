@@ -90,6 +90,8 @@ NS_KP_BEGIN
             logI("no video stream");
         }
         result.data->duration = result.data->pFormatContext->duration / AV_TIME_BASE;
+
+//        av_dump_format(result.data->pFormatContext, 0, sourcePath.c_str(), false);
         return result;
     }
 
@@ -191,6 +193,7 @@ NS_KP_BEGIN
         }
         av_codec_set_pkt_timebase(videoInfo->videoCodeContext,
                                   result->pFormatContext->streams[index]->time_base);
+        //todo fps获取
         result->videoInfo = videoInfo;
         return voidResult;
     }

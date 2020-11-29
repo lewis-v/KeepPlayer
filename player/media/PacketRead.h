@@ -23,16 +23,20 @@ NS_KP_BEGIN
         virtual bool onReadAudio(AVPacket avPacket) = 0;
 
         virtual void onFlush() = 0;
+
+        virtual void onReadProgress(double currentReadTime) = 0;
     };
 
     class SimplePacketReadListener : public IPacketReadListener {
     public:
         SimplePacketReadListener(std::function<bool(AVPacket)> readVideo,
                                  std::function<bool(AVPacket)> readAudio,
-                                 std::function<void()> flush) {
-            this->readAudio = readAudio;
-            this->readVideo = readVideo;
-            this->flush = flush;
+                                 std::function<void()> flush,
+                                 std::function<void(double)> readProgress) : readAudio(readAudio),
+                                                                   readVideo(readVideo),
+                                                                   flush(flush),
+                                                                   readProgress(readProgress) {
+
         }
 
         virtual bool onReadVideo(AVPacket avPacket) override {
@@ -47,10 +51,15 @@ NS_KP_BEGIN
             flush();
         }
 
+        virtual void onReadProgress(double currentReadTime) override {
+            readProgress(currentReadTime);
+        }
+
     protected:
         std::function<bool(AVPacket)> readVideo;
         std::function<bool(AVPacket)> readAudio;
         std::function<void()> flush;
+        std::function<void(double)> readProgress;
     };
 
     class IPacketRead : public Base {
@@ -82,10 +91,7 @@ NS_KP_BEGIN
 
     class PacketRead : public IPacketRead, BaseQueueController {
     public:
-        explicit PacketRead(ParseResult *playInfo, IPacketReadListener *readListener = nullptr)
-                : playInfo(playInfo) {
-            setListener(readListener);
-        }
+        explicit PacketRead(ParseResult *playInfo, IPacketReadListener *readListener = nullptr);
 
         ~PacketRead() override;
 
@@ -111,6 +117,8 @@ NS_KP_BEGIN
         ParseResult *playInfo = nullptr;
         AVPacket avPacket{};
         bool isComplete = false;
+        double audioReadTime = 0;
+        double videoReadTime = 0;
 
         void onQueueRun() override;
 

@@ -186,6 +186,10 @@ NS_KP_BEGIN
                     if (videoPlay != nullptr) {
                         videoPlay->flush();
                     }
+                },
+                [&] (double currentReadTime){
+                    //read progress
+
                 }
         ));
 
